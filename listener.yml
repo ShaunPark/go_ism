@@ -1,0 +1,9 @@
+listeners:
+  -
+    port: 5000
+    url: "/hello"
+    msgparam: "data"
+  -
+    port: 5001
+    url: "/hello2"
+    msgparam: "msg"
