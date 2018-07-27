@@ -14,9 +14,9 @@ func (client *MyhttpClient) Call() {
 	println("called ", idx)
 	localIdx := idx
 	if idx%2 == 0 {
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 	} else {
-		time.Sleep(10 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 	println("end of ", localIdx)
 }

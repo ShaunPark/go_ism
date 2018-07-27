@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
+	"ism.com/online/ismredis"
 )
 
 type httpGetHandler struct {
@@ -51,16 +52,12 @@ func (h *httpGetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(getRule(rInfo)))
 }
 func reload(key string) string {
-	if client == nil {
-		createRedisClient()
-	}
-
 	strs := strings.Split(key, ":")
 	val := getRuleFromDB(strs[1])
 	if val == "" {
 		fmt.Println("interface ", key, " does not exist!!")
 	} else {
-		client.Set(key, val, 0)
+		ismredis.Set(key, val)
 	}
 
 	return val
@@ -68,27 +65,10 @@ func reload(key string) string {
 func getRule(key string) string {
 	return getFromRedis(key)
 }
-
-var client *redis.Client
-
-func createRedisClient() {
-	client = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	pong, err := client.Ping().Result()
-	fmt.Println(pong, err)
-	// Output: PONG <nil>
-}
-
 func getFromRedis(key string) string {
-	if client == nil {
-		createRedisClient()
-	}
 
-	val, err := client.Get(key).Result()
+	val, err := ismredis.Get(key)
+
 	if err == redis.Nil {
 		fmt.Println(key, " does not exist")
 
@@ -98,7 +78,7 @@ func getFromRedis(key string) string {
 		if val == "" {
 			fmt.Println("interface ", key, " does not exist!!")
 		} else {
-			client.Set(key, val, 0)
+			ismredis.Set(key, val)
 		}
 	} else if err != nil {
 		panic(err)
