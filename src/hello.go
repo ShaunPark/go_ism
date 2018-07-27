@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/koding/cache"
+	"ism.com/online/gid"
 
 	"gopkg.in/yaml.v2"
 )
@@ -46,23 +47,29 @@ func main() {
 }
 
 var myParser message.Parser
+var myGidChecker gid.GidChecker
 
 func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	str := "Your Request Path is " + req.URL.Path
-	w.Write([]byte(str))
+	var returnMsg string
+	returnMsg = "Your Request Path is " + req.URL.Path
 	println(fmt.Sprint("Requests from ", req.RemoteAddr))
 
 	param1 := req.URL.Query().Get("data")
 	if param1 != "" {
-		println(myParser.GetGID(param1))
+		gid := myParser.GetGID(param1)
 		infId := myParser.GetInterfaceId(param1)
 		rule := getRule(infId, "INF")
-		println(rule)
+
+		if myGidChecker.CheckGID(gid) {
+			httpCli := new(myhttp.MyhttpClient)
+			returnMsg = httpCli.Call()
+		} else {
+			returnMsg = "GID already exist!"
+		}
 	}
 
-	httpCli := new(myhttp.MyhttpClient)
-
-	httpCli.Call()
+	println(returnMsg)
+	w.Write([]byte(returnMsg))
 }
 
 var ruleCache *cache.MemoryNoTS

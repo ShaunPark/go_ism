@@ -9,7 +9,7 @@ type MyhttpClient struct {
 
 var idx int
 
-func (client *MyhttpClient) Call() {
+func (client *MyhttpClient) Call() string {
 	idx += 1
 	println("called ", idx)
 	localIdx := idx
@@ -19,4 +19,5 @@ func (client *MyhttpClient) Call() {
 		time.Sleep(2 * time.Second)
 	}
 	println("end of ", localIdx)
+	return "call success!!!"
 }

@@ -1,7 +1,8 @@
 package gid
 
-type GidChecker struct {
+type GidCheckerInterface struct {
 }
-type GidCheckerInterface interface {
+
+type GidChecker interface {
 	CheckGID(gid string) bool
 }

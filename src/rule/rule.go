@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
+	"ism.com/common/db"
 	"ism.com/online/ismredis"
 )
 
@@ -51,6 +52,7 @@ func (h *httpGetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	w.Write([]byte(getRule(rInfo)))
 }
+
 func reload(key string) string {
 	strs := strings.Split(key, ":")
 	val := getRuleFromDB(strs[1])
@@ -62,9 +64,11 @@ func reload(key string) string {
 
 	return val
 }
+
 func getRule(key string) string {
 	return getFromRedis(key)
 }
+
 func getFromRedis(key string) string {
 
 	val, err := ismredis.Get(key)
@@ -95,22 +99,10 @@ type RuleInf struct {
 	Data string
 }
 
-var dbConn *sql.DB
-
 func getRuleFromDB(key string) string {
 	var rule RuleInf
-	var err error
-	if dbConn == nil {
-		dbConn, err = sql.Open("mysql", "root:admin@tcp(127.0.0.1:3306)/go_ism")
-		// if there is an error opening the connection, handle it
-		if err != nil {
-			panic(err.Error())
-		}
 
-		dbConn.Ping()
-		dbConn.SetMaxIdleConns(5)
-		dbConn.SetMaxOpenConns(100)
-	}
+	dbConn := db.GetDatabase()
 
 	// defer the close till after the main function has finished
 	// executing
