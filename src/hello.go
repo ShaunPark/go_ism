@@ -34,6 +34,7 @@ func main() {
 	lInfos := new(listeners)
 	lInfos = lInfos.loadListenerInfo()
 	myParser = getParser()
+	myGidChecker = getGidChecker()
 	for _, li := range lInfos.Listeners {
 		l := listenInfo(li)
 		println(l.Url)
@@ -59,7 +60,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		gid := myParser.GetGID(param1)
 		infId := myParser.GetInterfaceId(param1)
 		rule := getRule(infId, "INF")
-
+		println(rule)
 		if myGidChecker.CheckGID(gid) {
 			httpCli := new(myhttp.MyhttpClient)
 			returnMsg = httpCli.Call()
@@ -121,4 +122,8 @@ func (lInfo *listeners) loadListenerInfo() *listeners {
 
 func getParser() message.Parser {
 	return new(message.MyParser)
+}
+
+func getGidChecker() gid.GidChecker {
+	return new(gid.MySQLGIDChecker)
 }

@@ -1,6 +1,10 @@
 package ismredis
 
-import "github.com/go-redis/redis"
+import (
+	"time"
+
+	"github.com/go-redis/redis"
+)
 
 var client *redis.Client
 
@@ -30,4 +34,11 @@ func Set(key string, val string) {
 		createRedisClient()
 	}
 	client.Set(key, val, 0)
+}
+
+func SetExpire(key string, val string, sec int) {
+	if client == nil {
+		createRedisClient()
+	}
+	client.Set(key, val, time.Duration(sec)*time.Second)
 }

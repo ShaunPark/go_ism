@@ -1,6 +1,9 @@
 package gid
 
-import "ism.com/common/db"
+import (
+	"github.com/go-sql-driver/mysql"
+	"ism.com/common/db"
+)
 
 type MySQLGIDChecker struct {
 	GidChecker
@@ -17,8 +20,15 @@ func (gidChecker *MySQLGIDChecker) CheckGID(gid string) bool {
 
 	_, err = stmtIns.Exec(gid) // Insert tuples (i, i^2)
 	if err != nil {
-		panic(err.Error()) // proper error handling instead of panic in your app
+		if driverErr, ok := err.(*mysql.MySQLError); ok { // Now the error number is accessible directly
+			if driverErr.Number == 1062 {
+				return false
+				// Handle the permission-denied error
+			} else {
+				panic(err.Error()) // proper error handling instead of panic in your app
+			}
+		}
 	}
 
-	return false
+	return true
 }
