@@ -1,7 +1,7 @@
 package main
 
 import (
-	"encoding/json"
+	"ism.com/common/rule"
 )
 
 type Interface struct {
@@ -10,16 +10,9 @@ type Interface struct {
 }
 
 func main() {
-	jsonStr := `{"id":"EAION", "name":"test interface"}`
-	byt := []byte(jsonStr)
-
-	println(string(byt))
-	var inf Interface
-
-	if err := json.Unmarshal(byt, &inf); err != nil {
+	js, err := rule.GetInterface("CUSBN0003022")
+	if err != nil {
 		panic(err)
 	}
-
-	println(inf.Name)
-	println(inf.Id)
+	println(js)
 }

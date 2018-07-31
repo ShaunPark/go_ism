@@ -1,0 +1,6 @@
+dbs:
+  -
+    url: "tcp(192.168.0.25:3306)"
+    dbname: "ismdb"
+    dbid: "ism"
+    dbpasswd: "ism.1205"
