@@ -1,13 +1,13 @@
 package rule
 
 type Service struct {
-	Id            string
-	Name          string
-	SvcBlock      string
-	InDstrId      string
-	OutDstrId     string
-	ErrDstrId     string
-	ServiceType   string
-	InterfaceType string
-	SendRcvType   string
+	Id            string `json:"id"`
+	Name          string `json:"name"`
+	SvcBlock      string `json:"svcBlock"`
+	InDstrId      string `json:"inDstrId"`
+	OutDstrId     string `json:"outDstrId"`
+	ErrDstrId     string `json:"errDstrId"`
+	ServiceType   string `json:"svcType"`
+	InterfaceType string `json:"infType"`
+	SendRcvType   string `json:"srType"`
 }
