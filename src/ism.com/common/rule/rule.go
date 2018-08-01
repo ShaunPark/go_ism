@@ -9,14 +9,17 @@ import (
 )
 
 type Interface struct {
-	Id          string          `json:"id"`
-	Is2pc       string          `json:"is2pc"`
-	Msgvalid    string          `json:"messageValidate"`
-	InfType     string          `json:"infType"`
-	SvcTempId   string          `json:"svcTempId"`
+	Id        string `json:"id"`
+	Is2pc     string `json:"is2pc"`
+	Msgvalid  string `json:"messageValidate"`
+	InfType   string `json:"infType"`
+	SvcTempId string `json:"svcTempId"`
+
 	RealTimeSvc RealTimeService `json:"rSvc"`
 	BatchSvc    BatchService    `json:"bSvc"`
 	DeferredSvc DeferredService `json:"dSvc"`
+
+	Systems []SystemEntity `json:"systems"`
 }
 
 type RealTimeService struct {
@@ -56,6 +59,13 @@ type DeferredService struct {
 	CloseHandler          string `json:"closeHandler"`
 }
 
+type SystemEntity struct {
+	SystemId   string `json:"systemId"`
+	ParserName string `json:"parserName"`
+	Order      int    `json:"order"`
+	Timeout    int    `json:"timeout"`
+}
+
 func GetInterface(id string) (string, error) {
 	var inf Interface
 	dbConn := db.GetDatabase()
@@ -87,6 +97,11 @@ func GetInterface(id string) (string, error) {
 	}
 
 	if err != nil {
+		fmt.Printf("Error: %s", err)
+		return "", err
+	}
+
+	if inf.Systems, err = getSystemEntities(id, dbConn); err != nil {
 		fmt.Printf("Error: %s", err)
 		return "", err
 	}
@@ -158,4 +173,28 @@ func getDeferredService(id string, dbConn *sql.DB) (DeferredService, error) {
 		}
 	}
 	return svc, nil
+}
+
+func getSystemEntities(id string, dbConn *sql.DB) ([]SystemEntity, error) {
+	var sEntities []SystemEntity
+
+	stmt, err := dbConn.Prepare(sysEntity_sql)
+	if err != nil {
+		panic(err.Error())
+	}
+	rows, err := stmt.Query(id)
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		// get RawBytes from data
+		var sEntity SystemEntity
+		if err := rows.Scan(&sEntity.SystemId, &sEntity.ParserName, &sEntity.Order, &sEntity.Timeout); err != nil {
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+		sEntities = append(sEntities, sEntity)
+	}
+	return sEntities, nil
 }

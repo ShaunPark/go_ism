@@ -10,7 +10,7 @@ type Interface struct {
 }
 
 func main() {
-	js, err := rule.GetInterface("CUSBN0003022")
+	js, err := rule.GetField("FBFD000003")
 	if err != nil {
 		panic(err)
 	}
