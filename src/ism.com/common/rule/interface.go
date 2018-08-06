@@ -60,10 +60,10 @@ type DeferredService struct {
 }
 
 type SystemEntity struct {
-	SystemId   string `json:"systemId"`
-	ParserName string `json:"parserName"`
-	Order      int    `json:"order"`
-	Timeout    int    `json:"timeout"`
+	SystemId   string     `json:"systemId"`
+	ParserName NullString `json:"parserName"`
+	Order      int        `json:"order"`
+	Timeout    NullInt    `json:"timeout"`
 }
 
 func GetInterface(id string) (string, error) {
@@ -111,6 +111,7 @@ func GetInterface(id string) (string, error) {
 		fmt.Printf("Error: %s", err)
 		return "", err
 	}
+	println(string(b))
 	return string(b), nil
 }
 

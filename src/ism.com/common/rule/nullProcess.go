@@ -10,9 +10,9 @@ type NullString struct {
 }
 
 // MarshalJSON for NullString
-func (ns *NullString) MarshalJSON() ([]byte, error) {
+func (ns NullString) MarshalJSON() ([]byte, error) {
 	if !ns.Valid {
-		return []byte("null"), nil
+		return []byte(`""`), nil
 	}
 	return json.Marshal(ns.String)
 }
@@ -22,9 +22,9 @@ type NullInt struct {
 }
 
 // MarshalJSON for NullInt64
-func (ni *NullInt) MarshalJSON() ([]byte, error) {
+func (ni NullInt) MarshalJSON() ([]byte, error) {
 	if !ni.Valid {
-		return []byte("null"), nil
+		return []byte(`"0"`), nil
 	}
 	return json.Marshal(ni.Int64)
 }

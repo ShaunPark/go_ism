@@ -1,15 +1,15 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
-	"strings"
+	"strconv"
 
 	"github.com/go-redis/redis"
 	_ "github.com/go-sql-driver/mysql"
-	"ism.com/common/db"
-	"ism.com/online/ismredis"
+	"ism.com/common/rediscache"
+	"ism.com/common/rule"
+	"ism.com/common/rule/rmgr"
 )
 
 type httpGetHandler struct {
@@ -26,63 +26,72 @@ func main() {
 }
 
 func (h *httpReloadHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	rType := req.URL.Query().Get("rt")
-	if rType == "" {
+	rTypeStr := req.URL.Query().Get("rt")
+	if rTypeStr == "" {
 		println("empty rule type")
 	}
 	rId := req.URL.Query().Get("rid")
 	if rId == "" {
 		println("empty rule id")
 	}
-	rInfo := fmt.Sprint(rType, ":", rId)
+	var rType int
+	var err error
+	if rType, err = strconv.Atoi(rTypeStr); err != nil {
+		panic(err)
+	}
 
-	w.Write([]byte(reload(rInfo)))
+	w.Write([]byte(reload(rmgr.RuleType(rType), rId)))
 }
 
 func (h *httpGetHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	rType := req.URL.Query().Get("rt")
-	if rType == "" {
+	rTypeStr := req.URL.Query().Get("rt")
+	if rTypeStr == "" {
 		println("empty rule type")
 	}
 	rId := req.URL.Query().Get("rid")
 	if rId == "" {
 		println("empty rule id")
 	}
-	rInfo := fmt.Sprint(rType, ":", rId)
+	var rType int
+	var err error
+	if rType, err = strconv.Atoi(rTypeStr); err != nil {
+		panic(err)
+	}
 
-	w.Write([]byte(getRule(rInfo)))
+	w.Write([]byte(getRule(rmgr.RuleType(rType), rId)))
 }
 
-func reload(key string) string {
-	strs := strings.Split(key, ":")
-	val := getRuleFromDB(strs[1])
+func reload(rType rmgr.RuleType, rId string) string {
+	key := fmt.Sprint(rType, ":", rId)
+	val := getRuleFromDB(rType, rId)
 	if val == "" {
 		fmt.Println("interface ", key, " does not exist!!")
 	} else {
-		ismredis.Set(key, val)
+		rediscache.Set(key, val)
 	}
 
 	return val
 }
 
-func getRule(key string) string {
-	return getFromRedis(key)
+func getRule(rType rmgr.RuleType, rId string) string {
+	return getFromRedis(rType, rId)
 }
 
-func getFromRedis(key string) string {
+func getFromRedis(rType rmgr.RuleType, rId string) string {
 
-	val, err := ismredis.Get(key)
+	key := fmt.Sprint(rType, ":", rId)
+
+	val, err := rediscache.Get(key)
 
 	if err == redis.Nil {
 		fmt.Println(key, " does not exist")
 
 		// not exist. get from db and set to redis
-		strs := strings.Split(key, ":")
-		val = getRuleFromDB(strs[1])
+		val = getRuleFromDB(rType, rId)
 		if val == "" {
 			fmt.Println("interface ", key, " does not exist!!")
 		} else {
-			ismredis.Set(key, val)
+			rediscache.Set(key, val)
 		}
 	} else if err != nil {
 		panic(err)
@@ -93,33 +102,23 @@ func getFromRedis(key string) string {
 	return val
 }
 
-type RuleInf struct {
-	ID   string
-	Name string
-	Data string
-}
-
-func getRuleFromDB(key string) string {
-	var rule RuleInf
-
-	dbConn := db.GetDatabase()
-
-	// defer the close till after the main function has finished
-	// executing
-
-	stmt, err := dbConn.Prepare("SELECT ID, NAME, DATA FROM ISM_INF where ID = ?")
+func getRuleFromDB(rType rmgr.RuleType, rId string) string {
+	var retVal string
+	var err error
+	switch rType {
+	case rmgr.Interface:
+		retVal, err = rule.GetInterface(rId)
+	case rmgr.SerivceModel:
+		retVal, err = rule.GetServiceModel(rId)
+	case rmgr.DataStructure:
+		retVal, err = rule.GetDataStructure(rId)
+	case rmgr.FieldGroup:
+		retVal, err = rule.GetFieldGroup(rId)
+	case rmgr.Field:
+		retVal, err = rule.GetField(rId)
+	}
 	if err != nil {
 		panic(err.Error())
 	}
-	defer stmt.Close()
-
-	err = stmt.QueryRow(key).Scan(&rule.ID, &rule.Name, &rule.Data)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return ""
-		} else {
-			panic(err.Error())
-		}
-	}
-	return rule.Data
+	return retVal
 }

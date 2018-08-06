@@ -1,4 +1,4 @@
-package ismredis
+package rediscache
 
 import (
 	"time"

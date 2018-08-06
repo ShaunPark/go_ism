@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/koding/cache"
+	"ism.com/common/rule/rmgr"
 	"ism.com/online/gid"
 
 	"gopkg.in/yaml.v2"
@@ -59,7 +59,7 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	if param1 != "" {
 		gid := myParser.GetGID(param1)
 		infId := myParser.GetInterfaceId(param1)
-		rule := getRule(infId, "INF")
+		rule := rmgr.GetInterface(infId)
 		println(rule)
 		if myGidChecker.CheckGID(gid) {
 			httpCli := new(myhttp.MyhttpClient)
@@ -71,37 +71,6 @@ func (h *httpHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	println(returnMsg)
 	w.Write([]byte(returnMsg))
-}
-
-var ruleCache *cache.MemoryNoTS
-
-func getRule(infId string, infType string) string {
-	println(infId)
-
-	if ruleCache == nil {
-		ruleCache = cache.NewMemoryNoTS()
-	}
-	var retVal string
-	rInfo, err := ruleCache.Get(infId)
-	if err != nil {
-		if err == cache.ErrNotFound {
-			resp, err := http.Get(fmt.Sprint("http://localhost:3000/get?rid=", infId, "&rt=INF"))
-			if err != nil {
-				panic(err.Error())
-			}
-			defer resp.Body.Close()
-
-			body, err := ioutil.ReadAll(resp.Body)
-			retVal = string(body)
-			ruleCache.Set(infId, retVal)
-		} else {
-			panic(err.Error())
-		}
-	} else {
-		retVal = rInfo.(string)
-	}
-
-	return retVal
 }
 
 func (lInfo *listeners) loadListenerInfo() *listeners {

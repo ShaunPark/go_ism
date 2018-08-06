@@ -26,6 +26,7 @@ type ServiceEntity struct {
 	SvcType            string `json:"svcType"`
 
 	Routes []ServiceRoute `json:"routes"`
+	Inputs []RouteInput   `json:"rInputs"`
 }
 
 type ServiceRoute struct {
@@ -42,11 +43,6 @@ type RouteInput struct {
 	Value          string `json:"value"`
 	FieldId        string `json:"fldId"`
 	Path           string `json:"path"`
-}
-
-type InputService struct {
-	SvcId           string `json:"svcId"`
-	DataStructureId string `json:"dstrId"`
 }
 
 func GetServiceModel(id string) (string, error) {
@@ -104,6 +100,10 @@ func getServiceEntities(id string, dbConn *sql.DB) ([]ServiceEntity, error) {
 			fmt.Printf("Error: %s", err)
 			return nil, err
 		}
+		if svc.Inputs, err = getRouteInputs(id, dbConn); err != nil {
+			fmt.Printf("Error: %s", err)
+			return nil, err
+		}
 
 		svcs = append(svcs, svc)
 	}
@@ -113,7 +113,7 @@ func getServiceEntities(id string, dbConn *sql.DB) ([]ServiceEntity, error) {
 func getServiceRoutes(id string, dbConn *sql.DB) ([]ServiceRoute, error) {
 	var svcs []ServiceRoute
 
-	stmt, err := dbConn.Prepare(svcE_sql)
+	stmt, err := dbConn.Prepare(svcR_sql)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -133,4 +133,30 @@ func getServiceRoutes(id string, dbConn *sql.DB) ([]ServiceRoute, error) {
 		svcs = append(svcs, svc)
 	}
 	return svcs, nil
+}
+
+func getRouteInputs(id string, dbConn *sql.DB) ([]RouteInput, error) {
+	var inputs []RouteInput
+
+	stmt, err := dbConn.Prepare(rInput_sql)
+	if err != nil {
+		panic(err.Error())
+	}
+	rows, err := stmt.Query(id)
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		// get RawBytes from data
+		var input RouteInput
+		if err := rows.Scan(&input.SrcDataIndex, &input.SrcDetailIndex, &input.SrcFieldIndex,
+			&input.Value, &input.FieldId, &input.Path); err != nil {
+			panic(err.Error()) // proper error handling instead of panic in your app
+		}
+
+		inputs = append(inputs, input)
+	}
+	return inputs, nil
 }

@@ -29,11 +29,11 @@ type Application struct {
 }
 
 type DBApplication struct {
-	DBName        string `json:"dbName"`
-	JDBCType      string `json:"jdbcType"`
-	DBType        string `json:"dbType"`
-	DBParameter   string `json:"dbParam"`
-	AppSystemName string `json:"appSysName"`
+	DBName        string     `json:"dbName"`
+	JDBCType      string     `json:"jdbcType"`
+	DBType        string     `json:"dbType"`
+	DBParameter   NullString `json:"dbParam"`
+	AppSystemName NullString `json:"appSysName"`
 }
 
 type Server struct {

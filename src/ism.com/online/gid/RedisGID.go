@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis"
-	"ism.com/online/ismredis"
+	"ism.com/common/rediscache"
 )
 
 type RedisChecker struct {
@@ -13,11 +13,11 @@ type RedisChecker struct {
 
 func (gidChecker *RedisChecker) CheckGID(gid string) bool {
 	println("RedidChecker ...")
-	_, err := ismredis.Get(fmt.Sprint("GID:", gid))
+	_, err := rediscache.Get(fmt.Sprint("GID:", gid))
 	if err != nil {
 
 		if err == redis.Nil {
-			ismredis.SetExpire(fmt.Sprint("GID:", gid), gid, 10)
+			rediscache.SetExpire(fmt.Sprint("GID:", gid), gid, 10)
 			println("return true")
 			return true
 		} else {
