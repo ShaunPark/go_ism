@@ -9,9 +9,9 @@ import (
 )
 
 type FieldGroup struct {
-	Id             string `json:"id"`
-	Name           string `json:"name"`
-	FieldDelimeter string `json:"fDelimeter"`
+	Id             string     `json:"id"`
+	Name           string     `json:"name"`
+	FieldDelimeter NullString `json:"fDelimeter"`
 
 	Fields []FieldMap `json:"fields"`
 }
@@ -24,7 +24,7 @@ type FieldMap struct {
 	Iskey           string     `json:"isKey"`
 	Isnull          string     `json:"isNull"`
 	Issqlfunction   string     `json:"isSqlFunction"`
-	LengthFieldType string     `json:"lendthFldType"`
+	LengthFieldType NullString `json:"lendthFldType"`
 	InOutType       NullString `json:"inoutType"`
 	FilterType      NullString `json:"filterType"`
 }

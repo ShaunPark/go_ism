@@ -111,7 +111,6 @@ func GetInterface(id string) (string, error) {
 		fmt.Printf("Error: %s", err)
 		return "", err
 	}
-	println(string(b))
 	return string(b), nil
 }
 

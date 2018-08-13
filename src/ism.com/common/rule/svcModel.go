@@ -9,31 +9,31 @@ import (
 )
 
 type SvcModel struct {
-	Id           string `json:"id"`
-	RtnType      string `json:"rtnType"`
-	RtnIndex     int    `json:"rtnIdx"`
-	IsConcurrent string `json:"isConcurrent"`
+	Id           string     `json:"id"`
+	RtnType      NullString `json:"rtnType"`
+	RtnIndex     NullInt    `json:"rtnIdx"`
+	IsConcurrent string     `json:"isConcurrent"`
 
 	Services []ServiceEntity `json:"svcs"`
 }
 
 type ServiceEntity struct {
-	SvcId              string `json:"svcId"`
-	SyncType           string `json:"syncType"`
-	RoutingMatchMethod string `json:"rMatchMtd"`
-	EntityOrder        int    `json:"eOrder"`
-	ErrMapId           string `json:"errMap"`
-	SvcType            string `json:"svcType"`
+	SvcId              string     `json:"svcId"`
+	SyncType           NullString `json:"syncType"`
+	RoutingMatchMethod NullString `json:"rMatchMtd"`
+	EntityOrder        int        `json:"eOrder"`
+	ErrMapId           string     `json:"errMap"`
+	SvcType            string     `json:"svcType"`
 
 	Routes []ServiceRoute `json:"routes"`
 	Inputs []RouteInput   `json:"rInputs"`
 }
 
 type ServiceRoute struct {
-	TgtSvcIdx    int    `json:"tgtSvcIdx"`
-	MappingId    string `json:"mapId"`
-	IsDefault    string `json:"isDefault"`
-	RoutePattern string `json:"routPtn"`
+	TgtSvcIdx    int        `json:"tgtSvcIdx"`
+	MappingId    NullString `json:"mapId"`
+	IsDefault    NullString `json:"isDefault"`
+	RoutePattern string     `json:"routPtn"`
 }
 
 type RouteInput struct {
@@ -96,11 +96,11 @@ func getServiceEntities(id string, dbConn *sql.DB) ([]ServiceEntity, error) {
 		if err := rows.Scan(&svc.SvcId, &svc.SyncType, &svc.RoutingMatchMethod, &svc.EntityOrder, &svc.ErrMapId, &svc.SvcType); err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		}
-		if svc.Routes, err = getServiceRoutes(id, dbConn); err != nil {
+		if svc.Routes, err = getServiceRoutes(id, svc.EntityOrder, dbConn); err != nil {
 			fmt.Printf("Error: %s", err)
 			return nil, err
 		}
-		if svc.Inputs, err = getRouteInputs(id, dbConn); err != nil {
+		if svc.Inputs, err = getRouteInputs(id, svc.EntityOrder, dbConn); err != nil {
 			fmt.Printf("Error: %s", err)
 			return nil, err
 		}
@@ -110,14 +110,14 @@ func getServiceEntities(id string, dbConn *sql.DB) ([]ServiceEntity, error) {
 	return svcs, nil
 }
 
-func getServiceRoutes(id string, dbConn *sql.DB) ([]ServiceRoute, error) {
+func getServiceRoutes(id string, eOrder int, dbConn *sql.DB) ([]ServiceRoute, error) {
 	var svcs []ServiceRoute
 
 	stmt, err := dbConn.Prepare(svcR_sql)
 	if err != nil {
 		panic(err.Error())
 	}
-	rows, err := stmt.Query(id)
+	rows, err := stmt.Query(id, eOrder)
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}
@@ -135,14 +135,14 @@ func getServiceRoutes(id string, dbConn *sql.DB) ([]ServiceRoute, error) {
 	return svcs, nil
 }
 
-func getRouteInputs(id string, dbConn *sql.DB) ([]RouteInput, error) {
+func getRouteInputs(id string, eOrder int, dbConn *sql.DB) ([]RouteInput, error) {
 	var inputs []RouteInput
 
 	stmt, err := dbConn.Prepare(rInput_sql)
 	if err != nil {
 		panic(err.Error())
 	}
-	rows, err := stmt.Query(id)
+	rows, err := stmt.Query(id, eOrder)
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}
