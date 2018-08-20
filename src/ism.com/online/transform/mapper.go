@@ -218,10 +218,10 @@ func getSource(s rule.SourceColumn, input []ArrayInput, rCount int, useTarget []
 				// ret = input[msgIndex].getXmlValue(s.getSourcePath(), rCount);
 			} else {
 				if dataIndex < 0 {
-					if msgIndex >= len(input) || columnIndex >= len(input[msgIndex].Header) {
-						return ret, &ismerror.IsmError{errorCode.TRNS_INVALID_MASTER_OFFSET_INDEX, fmt.Sprintf("failed to get mapping data[%d]:[%d]", msgIndex, columnIndex)}
-					}
-					inputBytes = input[msgIndex].Header[columnIndex]
+					// if msgIndex >= len(input) || columnIndex >= len(input[msgIndex].Header) {
+					// 	return ret, &ismerror.IsmError{errorCode.TRNS_INVALID_MASTER_OFFSET_INDEX, fmt.Sprintf("failed to get mapping data[%d]:[%d]", msgIndex, columnIndex)}
+					// }
+					// inputBytes = input[msgIndex].Header[columnIndex]
 				} else {
 					if detailIndex < 0 {
 						if msgIndex >= len(input) || dataIndex >= len(input[msgIndex].Data) || columnIndex >= len(input[msgIndex].Data[dataIndex]) {

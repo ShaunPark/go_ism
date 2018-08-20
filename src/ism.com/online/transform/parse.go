@@ -1,42 +1,16 @@
 package transform
 
 import (
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"ism.com/common/constants"
 	"ism.com/common/errorCode"
 	"ism.com/common/ismerror"
 	"ism.com/common/rule"
 	"ism.com/common/rule/rmgr"
 )
-
-type ArrayInput struct {
-	ByteHeader []byte
-	ByteData   []byte
-	Header     [][]byte
-	Data       [][][]byte
-	Detail     [][][][][]byte
-	RepeatInfo [][]int
-}
-
-type Input struct {
-	header       []byte
-	bData        []byte
-	Data         [][]byte
-	Detail       [][][][]byte
-	headerOffset []int
-	DataOffset   []int
-	DetailOffset []int
-
-	headerLength int
-	DataLength   []int
-	DetailLength [][][]int
-}
 
 func Parse(msg []byte, dataId string) (ArrayInput, error) {
 	inDsrt := rmgr.GetDataStructure(dataId)
@@ -158,7 +132,7 @@ func parseRow(cPos int, in []byte, input ArrayInput, flg rule.FieldGroup, tempAr
 	for i := 0; i < fldCnt; i++ {
 		var fld rule.Field
 		var err error
-		if fld, err = rmgr.GetField(flg.Fields[i].Fieldid); err != nil {
+		if fld, err = rmgr.GetField(fmap[i].FieldId); err != nil {
 			panic(err)
 		}
 
@@ -166,7 +140,7 @@ func parseRow(cPos int, in []byte, input ArrayInput, flg rule.FieldGroup, tempAr
 			if lengthInfo, err := findLengthInfo(lengths, dIdx, dtIdx, i); err != nil {
 				panic(err)
 			} else {
-				if vLen, err := getVariableLength(input, rIdx, lengthInfo, inDstrt); err != nil {
+				if vLen, err := getVariableLength(input, rIdx, lengthInfo, fmap[i].FieldId, inDstrt); err != nil {
 					return -1, err
 				} else {
 					tempArray[i] = make([]byte, vLen)
@@ -204,98 +178,4 @@ func findLengthInfo(lengths []rule.LengthFieldInfo, dIdx int, dtIdx int, fIdx in
 	}
 	var ret rule.LengthFieldInfo
 	return ret, errors.New(fmt.Sprint("Length field for (", dIdx, ",", dtIdx, ",", fIdx, ") is not defined"))
-}
-
-func getVariableLength(input ArrayInput, rIdx int, lengthInfo rule.LengthFieldInfo, inDstrt rule.DataStructure) (int, error) {
-	length := 0
-	var data [][]byte
-
-	dIdx := lengthInfo.LengthDataIndex
-	dtIdx := lengthInfo.LengthDetailIndex
-	cIdx := lengthInfo.LengthFieldIndex
-
-	if dIdx < 0 {
-		data = input.Header
-	} else {
-		if dtIdx < 0 {
-			if input.Data == nil || len(input.Data) <= dIdx {
-				return -1, &ismerror.IsmError{errorCode.TRNS_ILLEGAL_DATA_INDEX, ""}
-			}
-			data = input.Data[dtIdx]
-		} else {
-			if input.Detail == nil || len(input.Detail) <= dIdx || input.Detail[dIdx] == nil || len(input.Detail[dIdx]) <= dtIdx {
-				return -1, &ismerror.IsmError{errorCode.TRNS_ILLEGAL_DETAIL_INDEX, ""}
-				// // String[] params = ExUtil.params(dataIndex);
-				// throw new TransformerException(eCode, ErrorMessage.getMessage(eCode, params), params);
-			}
-			data = input.Detail[dIdx][dtIdx][rIdx]
-		}
-	}
-
-	if len(data) < cIdx || cIdx < 0 {
-		return -1, &ismerror.IsmError{errorCode.TRNS_ILLEGAL_COL_INDEX, ""}
-	} else if data[cIdx] == nil {
-		return -1, &ismerror.IsmError{errorCode.TRNS_LENGTH_PARSING_ERROR, ""}
-	}
-
-	var flg rule.FieldGroup
-	var err error
-	if dtIdx < 0 {
-		flg, err = rmgr.GetFieldGroup(inDstrt.Data[dIdx].MasterFieldGroupId)
-	} else {
-		flg, err = rmgr.GetFieldGroup(inDstrt.Data[dIdx].Detail[dtIdx].DetailFieldGroupId)
-	}
-	if err != nil {
-		return -1, err
-	}
-	if fld, err := rmgr.GetField(flg.Fields[cIdx].Fieldid); err != nil {
-		return -1, err
-	} else {
-		if fld.FieldType == constants.TYPE_BINARY {
-			buf := bytes.NewReader(data[cIdx])
-			err := binary.Read(buf, binary.LittleEndian, &length)
-			if err != nil {
-				return -1, &ismerror.IsmError{errorCode.TRNS_LENGTH_PARSING_ERROR, ""}
-			}
-
-			var rErr error
-			switch fld.FieldLength {
-			case 1:
-				var temp int8
-				rErr = binary.Read(buf, binary.LittleEndian, &temp)
-				length = int(temp)
-			case 2:
-				var temp int16
-				rErr = binary.Read(buf, binary.LittleEndian, &temp)
-				length = int(temp)
-			case 4:
-				var temp int32
-				rErr = binary.Read(buf, binary.LittleEndian, &temp)
-				length = int(temp)
-			case 8:
-				var temp int64
-				rErr = binary.Read(buf, binary.LittleEndian, &temp)
-				length = int(temp)
-			default:
-				rErr = &ismerror.IsmError{errorCode.TRNS_LENGTH_PARSING_ERROR, "Unsupported field length. 2 and 4 are available."}
-			}
-
-			if rErr != nil {
-				return -1, rErr
-			}
-		} else if fld.FieldType == constants.TYPE_DATE {
-			return -1, &ismerror.IsmError{errorCode.TRNS_LENGTH_PARSING_ERROR, "Date format can not used for length field"}
-		} else {
-			if length, err = strconv.Atoi(strings.TrimSpace(string(data[cIdx]))); err != nil {
-				return -1, &ismerror.IsmError{errorCode.TRNS_LENGTH_PARSING_ERROR, ""}
-			}
-		}
-
-		length -= lengthInfo.DiffValue
-
-		if length <= 0 {
-			return -1, &ismerror.IsmError{errorCode.TRNS_LENGTH_PARSING_ERROR, ""}
-		}
-	}
-	return length, nil
 }
