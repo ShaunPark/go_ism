@@ -17,6 +17,20 @@ func (ns NullString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ns.String)
 }
 
+func (v *NullString) UnmarshalJSON(data []byte) error {
+	var x *string
+	if err := json.Unmarshal(data, &x); err != nil {
+		return err
+	}
+	if x != nil {
+		v.String = *x
+		v.Valid = true
+	} else {
+		v.Valid = false
+	}
+	return nil
+}
+
 type NullInt struct {
 	sql.NullInt64
 }

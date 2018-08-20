@@ -17,10 +17,10 @@ type FieldGroup struct {
 }
 
 type FieldMap struct {
-	Fieldindex      int        `json:"fIndex"`
-	Fieldid         string     `json:"fldId"`
-	Fieldoffset     int        `json:"fldOffset"`
-	Diffvalue       int        `json:"diffValue"`
+	FieldIndex      int        `json:"fIndex"`
+	FieldId         string     `json:"fldId"`
+	FieldOffset     int        `json:"fldOffset"`
+	DiffValue       int        `json:"diffValue"`
 	Iskey           string     `json:"isKey"`
 	Isnull          string     `json:"isNull"`
 	Issqlfunction   string     `json:"isSqlFunction"`
@@ -34,7 +34,7 @@ type Field struct {
 	Name        string `json:"name"`
 	FieldType   string `json:"fldType"`
 	FieldLength int    `json:"fldLength"`
-	Fieldformat string `json:"fldFormat"`
+	FieldFormat string `json:"fldFormat"`
 	Fillchar    string `json:"fillChar"`
 	Aligntype   string `json:"alignType"`
 }
@@ -49,7 +49,7 @@ func GetField(id string) (string, error) {
 	}
 	defer stmt.Close()
 	err = stmt.QueryRow(id).Scan(&fld.Id, &fld.Name, &fld.FieldType, &fld.FieldLength,
-		&fld.Fieldformat, &fld.Fillchar, &fld.Aligntype)
+		&fld.FieldFormat, &fld.Fillchar, &fld.Aligntype)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			println("not found")
@@ -115,8 +115,8 @@ func getFieldGroupMap(id string, dbConn *sql.DB) ([]FieldMap, error) {
 	for rows.Next() {
 		// get RawBytes from data
 		var fMap FieldMap
-		if err := rows.Scan(&fMap.Fieldindex, &fMap.Fieldid, &fMap.Fieldoffset,
-			&fMap.Diffvalue, &fMap.Iskey, &fMap.Isnull, &fMap.Issqlfunction,
+		if err := rows.Scan(&fMap.FieldIndex, &fMap.FieldId, &fMap.FieldOffset,
+			&fMap.DiffValue, &fMap.Iskey, &fMap.Isnull, &fMap.Issqlfunction,
 			&fMap.LengthFieldType, &fMap.InOutType, &fMap.FilterType); err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		}

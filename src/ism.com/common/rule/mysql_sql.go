@@ -41,7 +41,7 @@ const rInput_sql = "select sourcedataIndex, sourcedetailIndex, sourcefieldIndex,
 	" from RouteInput where ServiceTempleteId = ? and EntityOrder = ? order by InputIndex"
 
 // used in svcMap.go
-const sMap_sql = "select outputServiceId, DataStructureId from ServiceMappingRule where MappingId = ?"
+const sMap_sql = "select MappingId, outputServiceId, DataStructureId from ServiceMappingRule where MappingId = ?"
 const dMap_sql = "select dataindex, detailindex, columnindex, fieldid, customfunction from DataMapping where mappingid = ? order by dataindex, detailindex, columnindex "
 const sCol_sql = "select mappingindex, sourcedataindex, sourcedetailindex, sourcefieldindex, defaultvalue, fieldid, sourcemessageindex , path, isXml " +
 	"from SourceColumns where MAPPINGID = ? and DATAINDEX = ? and DETAILINDEX = ? and COLUMNINDEX = ? order by mappingindex"

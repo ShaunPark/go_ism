@@ -9,35 +9,35 @@ import (
 )
 
 type ServiceMap struct {
-	Id              string
-	OutSvcId        string
-	DataStructureId string
+	Id              string `json:"id"`
+	OutSvcId        string `json:"oSvc"`
+	DataStructureId string `json:"dstrt"`
 
-	InputServices []InputService
-	MasterMap     [][]DataMap
-	DetailMap     [][][]DataMap
+	InputServices []InputService `json:"inSvcs"`
+	MasterMap     [][]DataMap    `json:"mMap"`
+	DetailMap     [][][]DataMap  `json:"dMap"`
 }
 
 type DataMap struct {
-	Dataindex      int
-	Detailindex    int
-	Columnindex    int
-	FieldId        string
-	CustomFunction string
+	Dataindex      int        `json:"dIdx"`
+	Detailindex    int        `json:"dtIdx"`
+	Columnindex    int        `json:"cIdx"`
+	FieldId        NullString `json:"fld"`
+	CustomFunction NullString `json:"cFunc"`
 
-	Sources []SourceColumn
+	Sources []SourceColumn `json:"sCols"`
 }
 
 type SourceColumn struct {
-	MappingIndex       int
-	SourceDataIndex    int
-	SourceDetailIndex  int
-	SourceFieldIndex   int
-	DefaultValue       string
-	FieldId            string
-	SourceMessageIndex int
-	Path               string
-	IsXml              string
+	MappingIndex       int        `json:"mIdx"`
+	SourceDataIndex    int        `json:"sdIdx"`
+	SourceDetailIndex  int        `json:"sdtIdx"`
+	SourceFieldIndex   int        `json:"sfIdx"`
+	DefaultValue       NullString `json:"dValue"`
+	FieldId            NullString `json:"fld"`
+	SourceMessageIndex int        `json:"smIdx"`
+	Path               NullString `json:"path"`
+	IsXml              string     `json:"isXml"`
 }
 
 type InputService struct {
@@ -69,6 +69,37 @@ func GetServiceMap(id string) (string, error) {
 		return "", err
 	}
 
+	var dMap []DataMap
+	if dMap, err = getDataMap(id, dbConn); err != nil {
+		fmt.Printf("Error: %s", err)
+		return "", err
+	}
+
+	for i, item := range dMap {
+		if dMap[i].Sources, err = getSourceColumns(id, item.Dataindex, item.Detailindex, item.Columnindex, dbConn); err != nil {
+			fmt.Printf("Error: %s", err)
+			return "", err
+		}
+
+		if item.Dataindex < 0 {
+		} else {
+			if item.Detailindex < 0 {
+				if len(sMap.MasterMap) <= item.Dataindex {
+					sMap.MasterMap = append(sMap.MasterMap, make([]DataMap, 0))
+				}
+				sMap.MasterMap[item.Dataindex] = append(sMap.MasterMap[item.Dataindex], item)
+			} else {
+				if len(sMap.DetailMap) <= item.Dataindex {
+					sMap.DetailMap = append(sMap.DetailMap, make([][]DataMap, 0))
+				}
+				if len(sMap.DetailMap[item.Dataindex]) <= item.Detailindex {
+					sMap.DetailMap[item.Dataindex] = append(sMap.DetailMap[item.Dataindex], make([]DataMap, 0))
+				}
+				sMap.DetailMap[item.Dataindex][item.Detailindex] = append(sMap.DetailMap[item.Dataindex][item.Detailindex], item)
+			}
+		}
+	}
+
 	b, err := json.Marshal(sMap)
 	if err != nil {
 		fmt.Printf("Error: %s", err)
@@ -80,7 +111,7 @@ func GetServiceMap(id string) (string, error) {
 func getDataMap(id string, dbConn *sql.DB) ([]DataMap, error) {
 	var dMaps []DataMap
 
-	stmt, err := dbConn.Prepare(inSvc_sql)
+	stmt, err := dbConn.Prepare(dMap_sql)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -109,11 +140,11 @@ func getDataMap(id string, dbConn *sql.DB) ([]DataMap, error) {
 func getSourceColumns(id string, dIdx int, dtIdx int, cIdx int, dbConn *sql.DB) ([]SourceColumn, error) {
 	var scs []SourceColumn
 
-	stmt, err := dbConn.Prepare(inSvc_sql)
+	stmt, err := dbConn.Prepare(sCol_sql)
 	if err != nil {
 		panic(err.Error())
 	}
-	rows, err := stmt.Query(id)
+	rows, err := stmt.Query(id, dIdx, dtIdx, cIdx)
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}

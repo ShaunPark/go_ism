@@ -45,22 +45,22 @@ func GetSerivceModel(id string) rule.SvcModel {
 	return rule
 }
 
-func GetFieldGroup(id string) rule.FieldGroup {
+func GetFieldGroup(id string) (rule.FieldGroup, error) {
 	retStr := getRule(id, FieldGroup)
 	var rule rule.FieldGroup
 	if err := json.Unmarshal([]byte(retStr), &rule); err != nil {
-		panic(err)
+		return rule, err
 	}
-	return rule
+	return rule, nil
 }
 
-func GetField(id string) rule.Field {
+func GetField(id string) (rule.Field, error) {
 	retStr := getRule(id, Field)
 	var rule rule.Field
 	if err := json.Unmarshal([]byte(retStr), &rule); err != nil {
-		panic(err)
+		return rule, err
 	}
-	return rule
+	return rule, nil
 }
 
 func GetDataStructure(id string) rule.DataStructure {
